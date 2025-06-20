@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Audio Threat Detector{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Audio Threat Detector</h1>
+    <p class="lead">Automated audio analysis and threat detection system</p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ total_files }}</h3>
+                <p class="card-text">Total Files</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ processed_files }}</h3>
+                <p class="card-text">Processed Files</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ pending_files }}</h3>
+                <p class="card-text">Pending Files</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Recent Analyses</h3>
+    </div>
+    <div class="card-body">
+        {% if recent_results %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Threat Type</th>
+                        <th>Confidence</th>
+                        <th>Severity</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in recent_results %}
+                    <tr>
+                        <td>{{ result.audio_input.filename }}</td>
+                        <td>{{ result.threat_type }}</td>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ result.confidence * 100 }}%">
+                                    {{ "%.1f"|format(result.confidence * 100) }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-{{ result.severity_class }}">{{ result.severity }}</span></td>
+                        <td>{{ result.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <a href="{{ url_for('main.view_result', result_id=result.id) }}" 
+                               class="btn btn-sm btn-primary">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center">No recent analyses available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update status every 30 seconds
+setInterval(function() {
+    fetch('/api/status')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-files').textContent = data.total_files;
+            document.getElementById('processed-files').textContent = data.processed_files;
+            document.getElementById('pending-files').textContent = data.pending_files;
+        });
+}, 30000);
+</script>
+{% endblock %}
